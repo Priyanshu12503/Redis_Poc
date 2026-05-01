@@ -1,6 +1,9 @@
 package com.ttn.redish.human;
 
+import com.ttn.redish.common.HeavyPayload;
+import com.ttn.redish.common.HeavyPayloadJsonConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +26,10 @@ public class Human {
 
     @Column(nullable = false)
     private String occupation;
+
+    @Convert(converter = HeavyPayloadJsonConverter.class)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    private HeavyPayload payload;
 
     public Long getId() {
         return id;
@@ -54,5 +61,13 @@ public class Human {
 
     public void setOccupation(String occupation) {
         this.occupation = occupation;
+    }
+
+    public HeavyPayload getPayload() {
+        return payload;
+    }
+
+    public void setPayload(HeavyPayload payload) {
+        this.payload = payload;
     }
 }

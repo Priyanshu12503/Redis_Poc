@@ -1,0 +1,10 @@
+approach,operation,count,success_count,success_pct,avg_ms,min_ms,max_ms
+user_cacheable,get_by_id,200,200,100.00,3.239,1.542,10.828
+student_redis_repo,create,200,200,100.00,12.555,8.956,49.396
+human_redis_template,create,200,200,100.00,11.758,9.286,36.213
+human_redis_template,get_by_id,200,200,100.00,3.373,1.438,24.330
+user_cacheable,update,200,200,100.00,18.082,14.985,79.955
+human_redis_template,update,200,200,100.00,17.319,14.409,43.881
+student_redis_repo,get_by_id,200,200,100.00,3.297,1.455,12.907
+user_cacheable,create,200,200,100.00,15.541,10.007,291.534
+student_redis_repo,update,200,200,100.00,17.483,15.100,39.930

@@ -4,8 +4,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +38,15 @@ public class HumanController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Human not found");
         }
         return human;
+    }
+
+    @PatchMapping("/{id}")
+    public Human updateHuman(@PathVariable Long id, @RequestParam String name) {
+        Human updated = humanService.updateHuman(id, name);
+        if (updated == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Human not found");
+        }
+        return updated;
     }
 
     @GetMapping

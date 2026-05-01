@@ -4,12 +4,16 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
 
@@ -19,11 +23,19 @@ public class UserService {
 
     @CacheEvict(cacheNames = {"userById", "allUsers"}, allEntries = true)
     public User createUser(CreateUserRequest request) {
-        User user = new User();
-        user.setName(request.name());
-        user.setAge(request.age());
-        user.setOccupation(request.occupation());
-        return userRepository.save(user);
+        long start = System.nanoTime();
+        log.info("START UserService.createUser");
+        try {
+            User user = new User();
+            user.setName(request.name());
+            user.setAge(request.age());
+            user.setOccupation(request.occupation());
+            user.setPayload(request.payload());
+            return userRepository.save(user);
+        } finally {
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            log.info("END UserService.createUser - elapsedMs={}", elapsedMs);
+        }
     }
 
     @Cacheable(cacheNames = "userById", key = "#id", unless = "#result == null")
@@ -37,12 +49,19 @@ public class UserService {
             evict = @CacheEvict(cacheNames = "allUsers", allEntries = true)
     )
     public User updateUser(Long id, String name) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user != null) {
-            user.setName(name);
-            return userRepository.save(user);
+        long start = System.nanoTime();
+        log.info("START UserService.updateUser");
+        try {
+            User user = userRepository.findById(id).orElse(null);
+            if (user != null) {
+                user.setName(name);
+                return userRepository.save(user);
+            }
+            return user;
+        } finally {
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            log.info("END UserService.updateUser - elapsedMs={}", elapsedMs);
         }
-        return user;
     }
 
     @Cacheable(cacheNames = "allUsers")

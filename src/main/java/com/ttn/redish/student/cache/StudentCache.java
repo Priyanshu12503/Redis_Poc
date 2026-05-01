@@ -1,5 +1,8 @@
 package com.ttn.redish.student.cache;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ttn.redish.common.HeavyPayload;
 import com.ttn.redish.student.Student;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
@@ -7,11 +10,14 @@ import org.springframework.data.redis.core.RedisHash;
 @RedisHash(value = "student_by_id", timeToLive = 1800L)
 public class StudentCache {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Id
     private Long id;
     private String name;
     private Integer age;
     private String occupation;
+    private String payloadJson;
 
     public static StudentCache fromStudent(Student student) {
         StudentCache cache = new StudentCache();
@@ -19,6 +25,7 @@ public class StudentCache {
         cache.setName(student.getName());
         cache.setAge(student.getAge());
         cache.setOccupation(student.getOccupation());
+        cache.setPayloadJson(serializePayload(student.getPayload()));
         return cache;
     }
 
@@ -28,6 +35,7 @@ public class StudentCache {
         student.setName(name);
         student.setAge(age);
         student.setOccupation(occupation);
+        student.setPayload(deserializePayload(payloadJson));
         return student;
     }
 
@@ -61,5 +69,32 @@ public class StudentCache {
 
     public void setOccupation(String occupation) {
         this.occupation = occupation;
+    }
+
+    public String getPayloadJson() {
+        return payloadJson;
+    }
+
+    public void setPayloadJson(String payloadJson) {
+        this.payloadJson = payloadJson;
+    }
+
+    private static String serializePayload(HeavyPayload payload) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to serialize student payload for cache", e);
+        }
+    }
+
+    private static HeavyPayload deserializePayload(String payloadJson) {
+        if (payloadJson == null || payloadJson.isBlank()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(payloadJson, HeavyPayload.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to deserialize student payload from cache", e);
+        }
     }
 }

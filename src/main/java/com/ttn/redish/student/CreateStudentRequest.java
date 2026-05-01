@@ -1,5 +1,6 @@
 package com.ttn.redish.student;
 
+import com.ttn.redish.common.HeavyPayload;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +8,8 @@ import jakarta.validation.constraints.NotNull;
 public record CreateStudentRequest(
         @NotBlank String name,
         @NotNull @Min(0) Integer age,
-        @NotBlank String occupation
+        @NotBlank String occupation,
+        @NotNull HeavyPayload payload
 ) {
 
 }

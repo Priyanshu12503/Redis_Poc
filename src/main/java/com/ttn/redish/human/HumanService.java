@@ -1,6 +1,8 @@
 package com.ttn.redish.human;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -12,6 +14,7 @@ public class HumanService {
     private static final String ALL_HUMANS_CACHE_KEY = "human:all";
     private static final String HUMAN_BY_ID_CACHE_PREFIX = "human:id:";
     private static final Duration HUMAN_CACHE_TTL = Duration.ofMinutes(90);
+    private static final Logger log = LoggerFactory.getLogger(HumanService.class);
 
     private final HumanRepository humanRepository;
     private final RedisTemplate<String, Object> humanRedisTemplate;
@@ -23,17 +26,25 @@ public class HumanService {
     }
 
     public Human createHuman(CreateHumanRequest request) {
-        Human human = new Human();
-        human.setName(request.name());
-        human.setAge(request.age());
-        human.setOccupation(request.occupation());
+        long start = System.nanoTime();
+        log.info("START HumanService.createHuman");
+        try {
+            Human human = new Human();
+            human.setName(request.name());
+            human.setAge(request.age());
+            human.setOccupation(request.occupation());
+            human.setPayload(request.payload());
 
-        Human saved = humanRepository.save(human);
+            Human saved = humanRepository.save(human);
 
-        humanRedisTemplate.opsForValue().set(buildByIdKey(saved.getId()), saved, HUMAN_CACHE_TTL);
-        humanRedisTemplate.delete(ALL_HUMANS_CACHE_KEY);
+            humanRedisTemplate.opsForValue().set(buildByIdKey(saved.getId()), saved, HUMAN_CACHE_TTL);
+            humanRedisTemplate.delete(ALL_HUMANS_CACHE_KEY);
 
-        return saved;
+            return saved;
+        } finally {
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            log.info("END HumanService.createHuman - elapsedMs={}", elapsedMs);
+        }
     }
 
     public Human getHumanById(Long id) {
@@ -48,6 +59,25 @@ public class HumanService {
             humanRedisTemplate.opsForValue().set(cacheKey, human, HUMAN_CACHE_TTL);
         }
         return human;
+    }
+
+    public Human updateHuman(Long id, String name) {
+        long start = System.nanoTime();
+        log.info("START HumanService.updateHuman");
+        try {
+            Human human = humanRepository.findById(id).orElse(null);
+            if (human != null) {
+                human.setName(name);
+                Human updated = humanRepository.save(human);
+                humanRedisTemplate.opsForValue().set(buildByIdKey(id), updated, HUMAN_CACHE_TTL);
+                humanRedisTemplate.delete(ALL_HUMANS_CACHE_KEY);
+                return updated;
+            }
+            return null;
+        } finally {
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            log.info("END HumanService.updateHuman - elapsedMs={}", elapsedMs);
+        }
     }
 
     @SuppressWarnings("unchecked")
