@@ -1,4 +1,4 @@
-package com.ttn.redish.bench;
+package com.ttn.redish.noDb;
 
 import com.ttn.redish.common.HeavyPayload;
 import com.ttn.redish.student.Student;

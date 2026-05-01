@@ -1,4 +1,4 @@
-package com.ttn.redish.bench;
+package com.ttn.redish.noDb;
 
 import com.ttn.redish.common.HeavyPayload;
 import com.ttn.redish.student.Student;
@@ -22,6 +22,7 @@ public class BenchService {
 
     private static final String REDIS_ONLY_PREFIX = "bench:redis_only:";
     private static final String HUMAN_TEMPLATE_PREFIX = "bench:human_template:id:";
+    private static final String HUMAN_TEMPLATE_HASH_FIELD = "data";
     private static final Duration HUMAN_TEMPLATE_TTL = Duration.ofMinutes(90);
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -94,11 +95,12 @@ public class BenchService {
         value.put("age", 30);
         value.put("occupation", "Benchmark");
         value.put("payload", payload);
-        redisTemplate.opsForValue().set(key, value, HUMAN_TEMPLATE_TTL);
+        redisTemplate.opsForHash().put(key, HUMAN_TEMPLATE_HASH_FIELD, value);
+        redisTemplate.expire(key, HUMAN_TEMPLATE_TTL);
         return key;
     }
 
     public Object humanTemplateRead(String key) {
-        return redisTemplate.opsForValue().get(key);
+        return redisTemplate.opsForHash().get(key, HUMAN_TEMPLATE_HASH_FIELD);
     }
 }

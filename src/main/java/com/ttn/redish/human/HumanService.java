@@ -13,6 +13,7 @@ public class HumanService {
 
     private static final String ALL_HUMANS_CACHE_KEY = "human:all";
     private static final String HUMAN_BY_ID_CACHE_PREFIX = "human:id:";
+    private static final String HUMAN_HASH_FIELD = "data";
     private static final Duration HUMAN_CACHE_TTL = Duration.ofMinutes(90);
     private static final Logger log = LoggerFactory.getLogger(HumanService.class);
 
@@ -37,7 +38,9 @@ public class HumanService {
 
             Human saved = humanRepository.save(human);
 
-            humanRedisTemplate.opsForValue().set(buildByIdKey(saved.getId()), saved, HUMAN_CACHE_TTL);
+            String humanByIdKey = buildByIdKey(saved.getId());
+            humanRedisTemplate.opsForHash().put(humanByIdKey, HUMAN_HASH_FIELD, saved);
+            humanRedisTemplate.expire(humanByIdKey, HUMAN_CACHE_TTL);
             humanRedisTemplate.delete(ALL_HUMANS_CACHE_KEY);
 
             return saved;
@@ -49,14 +52,15 @@ public class HumanService {
 
     public Human getHumanById(Long id) {
         String cacheKey = buildByIdKey(id);
-        Object cached = humanRedisTemplate.opsForValue().get(cacheKey);
+        Object cached = humanRedisTemplate.opsForHash().get(cacheKey, HUMAN_HASH_FIELD);
         if (cached instanceof Human human) {
             return human;
         }
 
         Human human = humanRepository.findById(id).orElse(null);
         if (human != null) {
-            humanRedisTemplate.opsForValue().set(cacheKey, human, HUMAN_CACHE_TTL);
+            humanRedisTemplate.opsForHash().put(cacheKey, HUMAN_HASH_FIELD, human);
+            humanRedisTemplate.expire(cacheKey, HUMAN_CACHE_TTL);
         }
         return human;
     }
@@ -69,7 +73,9 @@ public class HumanService {
             if (human != null) {
                 human.setName(name);
                 Human updated = humanRepository.save(human);
-                humanRedisTemplate.opsForValue().set(buildByIdKey(id), updated, HUMAN_CACHE_TTL);
+                String humanByIdKey = buildByIdKey(id);
+                humanRedisTemplate.opsForHash().put(humanByIdKey, HUMAN_HASH_FIELD, updated);
+                humanRedisTemplate.expire(humanByIdKey, HUMAN_CACHE_TTL);
                 humanRedisTemplate.delete(ALL_HUMANS_CACHE_KEY);
                 return updated;
             }
